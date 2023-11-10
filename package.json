@@ -1,0 +1,27 @@
+{
+  "name": "webgpu-test-app",
+  "version": "1.0.0",
+  "description": "novorender webgpu test app",
+  "main": "index.js",
+  "scripts": {
+    "watch": "tsc --watch --noemit"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.4.1",
+    "@types/serviceworker": "^0.0.68",
+    "esbuild": "^0.19.5",
+    "ip": "^1.1.8",
+    "serve": "^14.2.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@novorender/wasm-parser": "^0.1.2",
+    "@webgpu/types": "^0.1.38",
+    "comlink": "^4.4.1",
+    "gl-matrix": "^3.4.3",
+    "preact": "^10.17.1",
+    "tslib": "^2.6.2"
+  }
+}

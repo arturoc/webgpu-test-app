@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "label": "npm: tsc watch",
+            "isBackground": true,
+            "script": "watch",
+            "problemMatcher": [
+                "$tsc-watch"
+            ],
+            "detail": "tsc --watch --noemit",
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "type": "shell",
+            "label": "build",
+            "command": "node",
+            "args": [
+                "build.mjs"
+            ],
+            "isBackground": true,
+            "problemMatcher": [],
+            "detail": "node build.mjs",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
