@@ -1,5 +1,5 @@
 import type { ViewImportmap } from "@novorender/web_app";
-import { shaders } from "@novorender/core3d/shaders"; // inline
+import { shaders, shadersWGSL } from "@novorender/core3d/shaders"; // inline
 import wasmUrl from "@novorender/core3d/wasm/main.wasm"; // file loader
 //@ts-ignore
 import wasmParserUrl from "@novorender/wasm-parser/wasm_parser_bg.wasm"; // file loader
@@ -20,6 +20,7 @@ export function esbuildImportMap(baseUrl: URL): ViewImportmap {
         parserWasm: wasmParserUrl as unknown as string,
         logo: logoUrl,
         shaders,
+        shadersWGSL,
         measureWorker: measureWorkerUrl,
         nurbsWasm: nurbsWasmUrl,
         ioWorker: ioWorkerUrl,
