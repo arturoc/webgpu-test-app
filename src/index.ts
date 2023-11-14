@@ -1,6 +1,13 @@
-import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics } from "@novorender/core3d"
+import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState } from "@novorender/core3d"
 import { esbuildImportMap } from "./esbuild";
-import { getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
+import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
+import { flipState } from "@novorender/web_app/flip";
+
+class PickContext {
+    async pick(x: number, y: number, options?: PickOptions) : Promise<PickSample | undefined> {
+        return undefined
+    }
+}
 
 export async function run() {
     const gpuTier: GPUTier = 2;
@@ -44,9 +51,22 @@ export async function run() {
         // return true;
     });
 
+    const controllerInput = new ControllerInput();
+    const pickContext = new PickContext();
+    const activeController = new FlightController(controllerInput, pickContext);
+    activeController.attach();
+    let renderStateCad = structuredClone(renderStateGL);
+    let prevRenderStateCad = undefined;
+    flipState(renderStateCad, "GLToCAD");
+    let stateChanges = undefined
+
     while (true) {
         const renderTime = await RenderContextWebGPU.nextFrame(renderContext);
         const frameTime = renderTime - prevRenderTime;
+        const cameraChanges = activeController.renderStateChanges(renderStateCad.camera, renderTime - prevRenderTime);
+        if (cameraChanges) {
+            stateChanges = mergeRecursive(stateChanges, cameraChanges);
+        }
         if(renderContext && !renderContext.isContextLost()) {
             renderContext.poll();
 
@@ -68,6 +88,18 @@ export async function run() {
         }else{
             prevState = undefined;
         }
+
+
+        if (stateChanges) {
+            prevRenderStateCad = renderStateCad;
+            renderStateCad = mergeRecursive(renderStateCad, stateChanges) as RenderState;
+            // drawContext2d.camera = renderStateCad.camera;
+            flipState(stateChanges, "CADToGL");
+            renderStateGL = modifyRenderState(renderStateGL, stateChanges);
+            // validate?.(renderStateGL, stateChanges);
+            stateChanges = undefined;
+        }
+
     }
 }
 
