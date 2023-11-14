@@ -16,6 +16,8 @@ export async function run() {
     const imports = await downloadCore3dImports(map);
     const canvas = document.getElementById("output") as HTMLCanvasElement;
     // TODO: webgpu equivalent or even read from the webgl attributes?
+    // This is passed to canvas.getContext in webgl2 but in webgpu most
+    // of these are set via device or pipeline
     // const options: WebGLContextAttributes = {
     //     alpha: true,
     //     antialias: true,
