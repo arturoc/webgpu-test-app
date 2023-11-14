@@ -51,8 +51,8 @@ export async function run() {
             origin: grid.origin,
         },
         output: {
-            width: output.width,
-            height: output.height,
+            width: document.body.clientWidth,
+            height: document.body.clientHeight,
             samplesMSAA: 4,
         }, camera, quality, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick
     };
@@ -87,6 +87,13 @@ export async function run() {
         if(renderContext && !renderContext.isContextLost()) {
             renderContext.poll();
 
+            renderStateGL = modifyRenderState(renderStateGL, {
+                output: {
+                    width: document.body.clientWidth,
+                    height: document.body.clientHeight,
+                    samplesMSAA: 4,
+                }
+            })
 
             if (prevState !== renderStateGL || renderContext.changed) {
                 prevState = renderStateGL;
