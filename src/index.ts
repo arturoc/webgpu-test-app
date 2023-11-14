@@ -1,6 +1,6 @@
 import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics } from "@novorender/core3d"
 import { esbuildImportMap } from "./esbuild";
-import { getDeviceProfile, type GPUTier, View, type ViewStatistics } from "@novorender/web_app";
+import { getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
 
 export async function run() {
     const gpuTier: GPUTier = 2;
@@ -23,7 +23,15 @@ export async function run() {
     const renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports);
     await renderContext.init();
     let prevState: RenderState | undefined;
-    let renderStateGL: RenderState = defaultRenderState();
+    const {  output, camera, quality, grid, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderState();
+    let renderStateGL: RenderState = {
+        background: {
+            // color: [1., 0., 0.4, 1.],
+            url: "http://localhost:8080",
+            blur: 0.05,
+        },
+        output, camera, quality, grid, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick
+    };
     let statistics: { readonly render: RenderStatistics, readonly view: ViewStatistics } | undefined = undefined;
     const resolutionModifier = 1;
     const currentDetailBias = 1;
@@ -46,7 +54,7 @@ export async function run() {
             if (prevState !== renderStateGL || renderContext.changed) {
                 prevState = renderStateGL;
                 const statsPromise = renderContext.render(renderStateGL);
-                statsPromise.then((stats) => {
+                await statsPromise.then((stats) => {
                     statistics = {
                         render: stats,
                         view: {
