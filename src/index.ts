@@ -32,14 +32,29 @@ export async function run() {
     const renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports);
     await renderContext.init();
     let prevState: RenderState | undefined;
-    const {  output, camera, quality, grid, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderState();
+    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderState();
     let renderStateGL: RenderState = {
         background: {
             // color: [1., 0., 0.4, 1.],
             url: "http://localhost:8080",
             blur: 0.05,
         },
-        output, camera, quality, grid, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick
+        grid: {
+            enabled: true,
+            axisX: grid.axisX,
+            axisY: grid.axisY,
+            color1: grid.color1,
+            color2: grid.color2,
+            distance: grid.distance,
+            size1: grid.size1,
+            size2: grid.size2,
+            origin: grid.origin,
+        },
+        output: {
+            width: output.width,
+            height: output.height,
+            samplesMSAA: 4,
+        }, camera, quality, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick
     };
     let statistics: { readonly render: RenderStatistics, readonly view: ViewStatistics } | undefined = undefined;
     const resolutionModifier = 1;
