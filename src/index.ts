@@ -1,4 +1,4 @@
-import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState } from "@novorender/core3d"
+import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState, defaultRenderStateWebGPU } from "@novorender/core3d"
 import { esbuildImportMap } from "./esbuild";
 import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
 import { flipState } from "@novorender/web_app/flip";
@@ -22,7 +22,7 @@ export async function run() {
     const renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports, config);
     await renderContext.init();
     let prevState: RenderState | undefined;
-    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderState();
+    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderStateWebGPU();
     let renderStateGL: RenderState = {
         background: {
             // color: [1., 0., 0.4, 1.],
@@ -44,7 +44,7 @@ export async function run() {
             width: document.body.clientWidth,
             height: document.body.clientHeight,
             samplesMSAA: 4,
-            webgpu: true,
+            webgpu: output.webgpu,
         },
         camera, quality, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines,
         tonemapping, points, toonOutline, pick
