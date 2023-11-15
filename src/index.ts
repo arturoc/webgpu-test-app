@@ -15,21 +15,11 @@ export async function run() {
     const map = esbuildImportMap(new URL("dist", import.meta.url));
     const imports = await downloadCore3dImports(map);
     const canvas = document.getElementById("output") as HTMLCanvasElement;
-    // TODO: webgpu equivalent or even read from the webgl attributes?
-    // This is passed to canvas.getContext in webgl2 but in webgpu most
-    // of these are set via device or pipeline
-    // const options: WebGLContextAttributes = {
-    //     alpha: true,
-    //     antialias: true,
-    //     depth: false,
-    //     desynchronized: false,
-    //     failIfMajorPerformanceCaveat: true,
-    //     powerPreference: "high-performance",
-    //     premultipliedAlpha: true,
-    //     preserveDrawingBuffer: true,
-    //     stencil: false,
-    // };
-    const renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports);
+    const config: Partial<GPUCanvasConfiguration> = {
+        alphaMode: "opaque",
+        colorSpace: "srgb",
+    };
+    const renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports, config);
     await renderContext.init();
     let prevState: RenderState | undefined;
     const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderState();
@@ -37,7 +27,7 @@ export async function run() {
         background: {
             // color: [1., 0., 0.4, 1.],
             url: "http://localhost:8080",
-            blur: 0.05,
+            // blur: 0.05,
         },
         grid: {
             enabled: true,
@@ -87,13 +77,13 @@ export async function run() {
         if(renderContext && !renderContext.isContextLost()) {
             renderContext.poll();
 
-            renderStateGL = modifyRenderState(renderStateGL, {
-                output: {
-                    width: document.body.clientWidth,
-                    height: document.body.clientHeight,
-                    samplesMSAA: 4,
-                }
-            })
+            // renderStateGL = modifyRenderState(renderStateGL, {
+            //     output: {
+            //         width: document.body.clientWidth,
+            //         height: document.body.clientHeight,
+            //         samplesMSAA: 4,
+            //     }
+            // })
 
             if (prevState !== renderStateGL || renderContext.changed) {
                 prevState = renderStateGL;
