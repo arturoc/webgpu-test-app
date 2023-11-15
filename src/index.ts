@@ -44,7 +44,10 @@ export async function run() {
             width: document.body.clientWidth,
             height: document.body.clientHeight,
             samplesMSAA: 4,
-        }, camera, quality, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick
+            webgpu: true,
+        },
+        camera, quality, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines,
+        tonemapping, points, toonOutline, pick
     };
     let statistics: { readonly render: RenderStatistics, readonly view: ViewStatistics } | undefined = undefined;
     const resolutionModifier = 1;
