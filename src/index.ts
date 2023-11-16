@@ -1,7 +1,17 @@
-import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState, defaultRenderStateWebGPU } from "@novorender/core3d"
+import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState, defaultRenderStateWebGPU, RenderContext } from "@novorender/core3d"
 import { esbuildImportMap } from "./esbuild";
 import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
 import { flipState } from "@novorender/web_app/flip";
+
+const USE_WEBGPU = true;
+
+function _defaultRenderState() {
+    if(USE_WEBGPU) {
+        return defaultRenderStateWebGPU();
+    }else{
+        return defaultRenderState();
+    }
+}
 
 class PickContext {
     async pick(x: number, y: number, options?: PickOptions) : Promise<PickSample | undefined> {
@@ -11,18 +21,55 @@ class PickContext {
 
 export async function run() {
     const gpuTier: GPUTier = 2;
+    // TODO: port to webgpu
     const deviceProfile = getDeviceProfile(gpuTier);
     const map = esbuildImportMap(new URL("dist", import.meta.url));
     const imports = await downloadCore3dImports(map);
     const canvas = document.getElementById("output") as HTMLCanvasElement;
-    const config: Partial<GPUCanvasConfiguration> = {
-        alphaMode: "opaque",
-        colorSpace: "srgb",
-    };
-    const renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports, config);
+    let renderContext: RenderContext | RenderContextWebGPU;
+    if(USE_WEBGPU) {
+        const config: Partial<GPUCanvasConfiguration> = {
+            alphaMode: "premultiplied",
+            colorSpace: "srgb",
+        };
+        renderContext = new RenderContextWebGPU(deviceProfile, canvas, imports, config);
+    }else{
+        const options: WebGLContextAttributes = {
+            alpha: true,
+            antialias: true,
+            depth: false,
+            desynchronized: false,
+            failIfMajorPerformanceCaveat: true,
+            powerPreference: "high-performance",
+            premultipliedAlpha: true,
+            preserveDrawingBuffer: true,
+            stencil: false,
+        };
+        canvas.addEventListener("webglcontextlost", function (event: WebGLContextEvent) {
+            event.preventDefault();
+            console.info("WebGL Context lost!");
+            if (renderContext) {
+                renderContext.contextLost();
+                // renderContext = undefined;
+            }
+            // trigger a reset of canvas on safari.
+            canvas.width = 300;
+            canvas.height = 150;
+            // if (animId !== undefined)
+            //     cancelAnimationFrame(animId);
+            // animId = undefined;
+        } as (event: Event) => void, false);
+
+        canvas.addEventListener("webglcontextrestored", function (event: WebGLContextEvent) {
+            console.info("WebGL Context restored!");
+            renderContext = new RenderContext(deviceProfile, canvas, imports, options);
+            renderContext.init();
+        } as (event: Event) => void, false);
+        renderContext = new RenderContext(deviceProfile, canvas, imports, options);
+    }
     await renderContext.init();
     let prevState: RenderState | undefined;
-    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = defaultRenderStateWebGPU();
+    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = _defaultRenderState();
     let renderStateGL: RenderState = {
         background: {
             // color: [1., 0., 0.4, 1.],
@@ -44,10 +91,41 @@ export async function run() {
             width: document.body.clientWidth,
             height: document.body.clientHeight,
             samplesMSAA: 4,
+            // samplesMSAA: output.samplesMSAA,
             webgpu: output.webgpu,
         },
-        camera, quality, debug, cube, scene, terrain,  dynamic, clipping, highlights, outlines,
-        tonemapping, points, toonOutline, pick
+        cube: {
+            enabled: true,
+            position: cube.position,
+            scale: cube.scale,
+        },
+        outlines: {
+            enabled: true,
+            color: [0., 0., 0.],
+            on: true,
+            plane: [0., 0., 1., 0.],
+        },
+        clipping: {
+            draw: true,
+            enabled: true,
+            planes: [
+                {
+                    normalOffset: [0., 0., 1., 0.],
+                },
+            ],
+            mode: 0
+        },
+        camera,
+        quality,
+        debug,
+        scene,
+        terrain,
+        dynamic,
+        highlights,
+        tonemapping,
+        points,
+        toonOutline,
+        pick
     };
     let statistics: { readonly render: RenderStatistics, readonly view: ViewStatistics } | undefined = undefined;
     const resolutionModifier = 1;
@@ -71,7 +149,12 @@ export async function run() {
     let stateChanges = undefined
 
     while (true) {
-        const renderTime = await RenderContextWebGPU.nextFrame(renderContext);
+        let renderTime;
+        if(renderContext instanceof RenderContextWebGPU){
+            renderTime = await RenderContextWebGPU.nextFrame(renderContext);
+        }else{
+            renderTime = await RenderContext.nextFrame(renderContext);
+        }
         const frameTime = renderTime - prevRenderTime;
         const cameraChanges = activeController.renderStateChanges(renderStateCad.camera, renderTime - prevRenderTime);
         if (cameraChanges) {
@@ -80,13 +163,15 @@ export async function run() {
         if(renderContext && !renderContext.isContextLost()) {
             renderContext.poll();
 
-            // renderStateGL = modifyRenderState(renderStateGL, {
-            //     output: {
-            //         width: document.body.clientWidth,
-            //         height: document.body.clientHeight,
-            //         samplesMSAA: 4,
-            //     }
-            // })
+            if(document.body.clientWidth != renderStateGL.output.width || document.body.clientHeight != renderStateGL.output.height) {
+                renderStateGL = modifyRenderState(renderStateGL, {
+                    output: {
+                        width: document.body.clientWidth,
+                        height: document.body.clientHeight,
+                        samplesMSAA: 4,
+                    }
+                })
+            }
 
             if (prevState !== renderStateGL || renderContext.changed) {
                 prevState = renderStateGL;
