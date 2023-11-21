@@ -1,4 +1,4 @@
-import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState, defaultRenderStateWebGPU, RenderContext } from "@novorender/core3d"
+import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRenderState, type RenderStatistics, type PickOptions, type PickSample, mergeRecursive, modifyRenderState, defaultRenderStateWebGPU, RenderContext, TonemappingMode } from "@novorender/core3d"
 import { esbuildImportMap } from "./esbuild";
 import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
 import { flipState } from "@novorender/web_app/flip";
@@ -139,7 +139,10 @@ export async function run() {
         terrain,
         dynamic,
         highlights,
-        tonemapping,
+        tonemapping: {
+            exposure: tonemapping.exposure,
+            mode: TonemappingMode.color
+        },
         points,
         toonOutline,
         pick
