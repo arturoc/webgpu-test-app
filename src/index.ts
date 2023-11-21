@@ -2,6 +2,7 @@ import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRe
 import { esbuildImportMap } from "./esbuild";
 import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
 import { flipState } from "@novorender/web_app/flip";
+// import { mat3, mat4, quat, vec3 } from "gl-matrix"
 
 const USE_WEBGPU = true;
 
@@ -27,6 +28,8 @@ export async function run() {
     const imports = await downloadCore3dImports(map);
     const canvas = document.getElementById("output") as HTMLCanvasElement;
     let renderContext: RenderContext | RenderContextWebGPU;
+    const apiDiv = document.getElementById("api") as HTMLDivElement;
+    apiDiv.innerHTML = USE_WEBGPU ? "<p>WebGPU</p>" : "<p>WebGL2</p>"
     if(USE_WEBGPU) {
         const config: Partial<GPUCanvasConfiguration> = {
             alphaMode: "premultiplied",
@@ -70,6 +73,9 @@ export async function run() {
     await renderContext.init();
     let prevState: RenderState | undefined;
     const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = _defaultRenderState();
+    // let eye = vec3.fromValues(1., 5., -6.);
+    // let lookAt = mat4.lookAt(mat4.create(), eye, vec3.fromValues(0., 0., 0.), vec3.fromValues(0., 1., 0.));
+    // let rotation = quat.fromMat3(quat.create(), mat3.fromMat4(mat3.create(), lookAt));
     let renderStateGL: RenderState = {
         background: {
             // color: [1., 0., 0.4, 1.],
@@ -98,16 +104,18 @@ export async function run() {
             enabled: true,
             position: cube.position,
             scale: cube.scale,
+            drawAxis: false,
+            drawCube: true,
         },
         outlines: {
-            enabled: true,
+            enabled: false,
             color: [0., 0., 0.],
             on: true,
             plane: [0., 0., 1., 0.],
         },
         clipping: {
-            draw: true,
-            enabled: true,
+            draw: false,
+            enabled: false,
             planes: [
                 {
                     normalOffset: [0., 0., 1., 0.],
@@ -115,6 +123,15 @@ export async function run() {
             ],
             mode: 0
         },
+        // camera: {
+        //     far: camera.far,
+        //     fov: camera.fov,
+        //     near: camera.near,
+        //     pivot: camera.pivot,
+        //     position: vec3.fromValues(1., 5., -6.),
+        //     rotation,
+        //     kind: "pinhole"
+        // },
         camera,
         quality,
         debug,
@@ -173,10 +190,20 @@ export async function run() {
                 })
             }
 
+            if (stateChanges) {
+                prevRenderStateCad = renderStateCad;
+                renderStateCad = mergeRecursive(renderStateCad, stateChanges) as RenderState;
+                // drawContext2d.camera = renderStateCad.camera;
+                flipState(stateChanges, "CADToGL");
+                renderStateGL = modifyRenderState(renderStateGL, stateChanges);
+                // validate?.(renderStateGL, stateChanges);
+                stateChanges = undefined;
+            }
+
             if (prevState !== renderStateGL || renderContext.changed) {
                 prevState = renderStateGL;
                 const statsPromise = renderContext.render(renderStateGL);
-                await statsPromise.then((stats) => {
+                const statsViewPromise = statsPromise.then((stats) => {
                     statistics = {
                         render: stats,
                         view: {
@@ -186,20 +213,12 @@ export async function run() {
                         }
                     };
                 });
+                if(USE_WEBGPU) {
+                    await statsViewPromise;
+                }
             }
         }else{
             prevState = undefined;
-        }
-
-
-        if (stateChanges) {
-            prevRenderStateCad = renderStateCad;
-            renderStateCad = mergeRecursive(renderStateCad, stateChanges) as RenderState;
-            // drawContext2d.camera = renderStateCad.camera;
-            flipState(stateChanges, "CADToGL");
-            renderStateGL = modifyRenderState(renderStateGL, stateChanges);
-            // validate?.(renderStateGL, stateChanges);
-            stateChanges = undefined;
         }
 
     }
