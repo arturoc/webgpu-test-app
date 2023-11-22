@@ -4,33 +4,35 @@ import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type
 import { flipState } from "@novorender/web_app/flip";
 // import { mat3, mat4, quat, vec3 } from "gl-matrix"
 
-const USE_WEBGPU = true;
-
-function _defaultRenderState() {
-    if(USE_WEBGPU) {
-        return defaultRenderStateWebGPU();
-    }else{
-        return defaultRenderState();
-    }
-}
-
 class PickContext {
     async pick(x: number, y: number, options?: PickOptions) : Promise<PickSample | undefined> {
         return undefined
     }
 }
 
-export async function run() {
+enum Mode {
+    WebGPU,
+    WebGL,
+}
+
+
+function _defaultRenderState(mode: Mode) {
+    if(mode == Mode.WebGPU) {
+        return defaultRenderStateWebGPU();
+    }else{
+        return defaultRenderState();
+    }
+}
+
+export async function run(mode: Mode) {
     const gpuTier: GPUTier = 2;
     // TODO: port to webgpu
     const deviceProfile = getDeviceProfile(gpuTier);
     const map = esbuildImportMap(new URL("dist", import.meta.url));
     const imports = await downloadCore3dImports(map);
-    const canvas = document.getElementById("output") as HTMLCanvasElement;
+    const canvas = document.getElementById(mode == Mode.WebGPU ? "webgpu-output" : "webgl-output") as HTMLCanvasElement;
     let renderContext: RenderContext | RenderContextWebGPU;
-    const apiDiv = document.getElementById("api") as HTMLDivElement;
-    apiDiv.innerHTML = USE_WEBGPU ? "<p>WebGPU</p>" : "<p>WebGL2</p>"
-    if(USE_WEBGPU) {
+    if(mode == Mode.WebGPU) {
         const config: Partial<GPUCanvasConfiguration> = {
             alphaMode: "premultiplied",
             colorSpace: "srgb",
@@ -72,10 +74,7 @@ export async function run() {
     }
     await renderContext.init();
     let prevState: RenderState | undefined;
-    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = _defaultRenderState();
-    // let eye = vec3.fromValues(1., 5., -6.);
-    // let lookAt = mat4.lookAt(mat4.create(), eye, vec3.fromValues(0., 0., 0.), vec3.fromValues(0., 1., 0.));
-    // let rotation = quat.fromMat3(quat.create(), mat3.fromMat4(mat3.create(), lookAt));
+    const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = _defaultRenderState(mode);
     let renderStateGL: RenderState = {
         background: {
             // color: [1., 0., 0.4, 1.],
@@ -94,8 +93,8 @@ export async function run() {
             origin: grid.origin,
         },
         output: {
-            width: document.body.clientWidth,
-            height: document.body.clientHeight,
+            width: canvas.clientWidth,
+            height: canvas.clientHeight,
             samplesMSAA: 4,
             // samplesMSAA: output.samplesMSAA,
             webgpu: output.webgpu,
@@ -183,11 +182,11 @@ export async function run() {
         if(renderContext && !renderContext.isContextLost()) {
             renderContext.poll();
 
-            if(document.body.clientWidth != renderStateGL.output.width || document.body.clientHeight != renderStateGL.output.height) {
+            if(canvas.clientWidth != renderStateGL.output.width || canvas.clientHeight != renderStateGL.output.height) {
                 renderStateGL = modifyRenderState(renderStateGL, {
                     output: {
-                        width: document.body.clientWidth,
-                        height: document.body.clientHeight,
+                        width: canvas.clientWidth,
+                        height: canvas.clientHeight,
                         samplesMSAA: 4,
                     }
                 })
@@ -216,7 +215,7 @@ export async function run() {
                         }
                     };
                 });
-                if(USE_WEBGPU) {
+                if(mode == Mode.WebGPU) {
                     await statsViewPromise;
                 }
             }
@@ -227,4 +226,5 @@ export async function run() {
     }
 }
 
-run()
+run(Mode.WebGPU)
+run(Mode.WebGL)
