@@ -2,6 +2,7 @@ import { RenderContextWebGPU, downloadCore3dImports, type RenderState, defaultRe
 import { esbuildImportMap } from "./esbuild";
 import { ControllerInput, FlightController, getDeviceProfile, type GPUTier, type ViewStatistics } from "@novorender/web_app";
 import { flipState } from "@novorender/web_app/flip";
+import { createVertices } from "@novorender/core3d/modules/cube/common";
 // import { mat3, mat4, quat, vec3 } from "gl-matrix"
 
 class PickContext {
@@ -22,6 +23,102 @@ function _defaultRenderState(mode: Mode) {
     }else{
         return defaultRenderState();
     }
+}
+
+function cubeVertices() {
+    const mins = {x: -0.5, y: -0.5, z: -0.5};
+    const maxs = {x:  0.5, y:  0.5, z:  0.5};
+    return new Float32Array([
+        mins.x, mins.y, maxs.z,
+        maxs.x, mins.y, maxs.z,
+        maxs.x, maxs.y, maxs.z,
+        mins.x, maxs.y, maxs.z,
+
+        mins.x, mins.y, mins.z,
+        maxs.x, mins.y, mins.z,
+        maxs.x, mins.y, maxs.z,
+        mins.x, mins.y, maxs.z,
+
+        mins.x, mins.y, mins.z,
+        mins.x, mins.y, maxs.z,
+        mins.x, maxs.y, maxs.z,
+        mins.x, maxs.y, mins.z,
+
+        maxs.x, mins.y, maxs.z,
+        maxs.x, mins.y, mins.z,
+        maxs.x, maxs.y, mins.z,
+        maxs.x, maxs.y, maxs.z,
+
+        maxs.x, maxs.y, mins.z,
+        mins.x, maxs.y, mins.z,
+        mins.x, maxs.y, maxs.z,
+        maxs.x, maxs.y, maxs.z,
+
+        maxs.x, mins.y, mins.z,
+        mins.x, mins.y, mins.z,
+        mins.x, maxs.y, mins.z,
+        maxs.x, maxs.y, mins.z,
+    ]);
+}
+
+function cubeNormals() {
+    const top =    [ 0,  1,  0];
+    const bottom = [ 0, -1,  0];
+    const left =   [-1,  0,  0];
+    const right =  [ 1,  0,  0];
+    const front =  [ 0,  0,  1];
+    const back  =  [ 0,  0, -1];
+    return new Float32Array([
+        front,
+        front,
+        front,
+        front,
+        bottom,
+        bottom,
+        bottom,
+        bottom,
+        left,
+        left,
+        left,
+        left,
+        right,
+        right,
+        right,
+        right,
+        top,
+        top,
+        top,
+        top,
+        back,
+        back,
+        back,
+        back,
+    ].flat());
+}
+
+function cubeColors() {
+    return new Float32Array(Array(24*4).fill(1.))
+}
+
+function cubeTexcoords() {
+    return new Float32Array(Array(24*2).fill(1.))
+}
+
+function cubeTangents() {
+    return new Float32Array(Array(24*4).fill(1.))
+}
+
+function cubeIndices() {
+    const arr = [...Array(24).keys()];
+    const chunkSize = 4;
+    const keys = [...Array(24/chunkSize).keys()];
+    return new Uint16Array(keys.flatMap((i) => {
+        let chunk = arr.slice(i * chunkSize, i * chunkSize + chunkSize)
+        return [
+            chunk[0], chunk[1], chunk[2],
+            chunk[0], chunk[2], chunk[3]
+        ]
+    }))
 }
 
 export async function run(mode: Mode) {
@@ -100,21 +197,21 @@ export async function run(mode: Mode) {
             webgpu: output.webgpu,
         },
         cube: {
-            enabled: true,
+            enabled: false,
             position: cube.position,
             scale: cube.scale,
             drawAxis: false,
             drawCube: true,
         },
         outlines: {
-            enabled: false,
+            enabled: true,
             color: [0., 0., 0.],
             on: true,
             plane: [0., 0., 1., 0.],
         },
         clipping: {
-            draw: false,
-            enabled: false,
+            draw: true,
+            enabled: true,
             planes: [
                 {
                     normalOffset: [0., 0., 1., 0.],
@@ -132,11 +229,86 @@ export async function run(mode: Mode) {
         //     kind: "pinhole"
         // },
         camera,
+        dynamic: {
+            objects: [{
+                mesh: {
+                    primitives: [{
+                        geometry: {
+                            primitiveType: "TRIANGLES",
+                            attributes: {
+                                position: {
+                                    kind: "FLOAT_VEC3",
+                                    buffer: cubeVertices(),
+                                    componentType: "FLOAT",
+                                    componentCount: 3,
+                                },
+                                normal: {
+                                    kind: "FLOAT_VEC3",
+                                    buffer: cubeNormals(),
+                                    componentType: "FLOAT",
+                                    componentCount: 3,
+                                },
+                                tangent: {
+                                    kind: "FLOAT_VEC4",
+                                    buffer: cubeTangents(),
+                                    componentType: "FLOAT",
+                                    componentCount: 4
+                                },
+                                color0: {
+                                    kind: "FLOAT_VEC4",
+                                    buffer: cubeColors(),
+                                    componentType: "FLOAT",
+                                    componentCount: 4
+                                },
+                                texCoord0: {
+                                    kind: "FLOAT_VEC2",
+                                    buffer: cubeTexcoords(),
+                                    componentType: "FLOAT",
+                                    componentCount: 2
+                                },
+                                texCoord1: {
+                                    kind: "FLOAT_VEC2",
+                                    buffer: cubeTexcoords(),
+                                    componentType: "FLOAT",
+                                    componentCount: 2
+                                },
+                            },
+                            indices: cubeIndices(),
+                        },
+                        material: {
+                            kind: "ggx",
+                            baseColorFactor: [1,1,1,1],
+                            metallicFactor: 0,
+                            roughnessFactor: 0.5,
+                            emissiveFactor: [0,0,0],
+                            baseColorTexture: undefined,
+                            metallicRoughnessTexture: undefined,
+                            normalTexture: undefined,
+                            occlusionTexture: undefined,
+                            emissiveTexture: undefined,
+                            doubleSided: false,
+                            alphaMode: undefined,
+                            alphaCutoff: 0.5,
+                        }
+                    }]
+                },
+                instances: [
+                    {
+                        position: [-2., 0., 0.],
+                    },
+                    {
+                        position: [0., 0., 0.],
+                    },
+                    {
+                        position: [2., 0., 0.],
+                    }
+                ],
+            }]
+        },
         quality,
         debug,
         scene,
         terrain,
-        dynamic,
         highlights,
         tonemapping: {
             exposure: tonemapping.exposure,
