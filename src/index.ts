@@ -97,7 +97,39 @@ function cubeNormals() {
 }
 
 function cubeColors() {
-    return new Float32Array(Array(24*4).fill(1.))
+    // return new Float32Array(Array(24*4).fill(1.))
+    const top =    [ 0,  1,  0, 1];
+    const bottom = [ 0,  1,  0, 1];
+    const left =   [ 1,  0,  0, 1];
+    const right =  [ 1,  0,  0, 1];
+    const front =  [ 0,  0,  1, 1];
+    const back  =  [ 0,  0,  1, 1];
+    return new Float32Array([
+        front,
+        bottom,
+        left,
+        right,
+        bottom,
+        left,
+        right,
+        top,
+        left,
+        right,
+        top,
+        back,
+        right,
+        top,
+        back,
+        front,
+        top,
+        back,
+        front,
+        left,
+        back,
+        front,
+        left,
+        right,
+    ].flat());
 }
 
 function cubeTexcoords() {
@@ -274,6 +306,7 @@ export async function run(mode: Mode) {
                                 },
                             },
                             indices: cubeIndices(),
+                            // indices: cubeVertices().length
                         },
                         material: {
                             kind: "ggx",
