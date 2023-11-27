@@ -96,8 +96,11 @@ function cubeNormals() {
     ].flat());
 }
 
+function cubeWhite() {
+    return new Float32Array(Array(24*4).fill(1.))
+}
+
 function cubeColors() {
-    // return new Float32Array(Array(24*4).fill(1.))
     const top =    [ 0,  1,  0, 1];
     const bottom = [ 0,  1,  0, 1];
     const left =   [ 1,  0,  0, 1];
@@ -133,7 +136,39 @@ function cubeColors() {
 }
 
 function cubeTexcoords() {
-    return new Float32Array(Array(24*2).fill(1.))
+    const mins = {x: 0.0, y: 1.0};
+    const maxs = {x: 1.0, y: 0.0};
+    return new Float32Array([
+        mins.x, mins.y,
+        maxs.x, mins.y,
+        maxs.x, maxs.y,
+        mins.x, maxs.y,
+
+        mins.x, mins.y,
+        maxs.x, mins.y,
+        maxs.x, maxs.y,
+        mins.x, maxs.y,
+
+        mins.x, mins.y,
+        maxs.x, mins.y,
+        maxs.x, maxs.y,
+        mins.x, maxs.y,
+
+        mins.x, mins.y,
+        maxs.x, mins.y,
+        maxs.x, maxs.y,
+        mins.x, maxs.y,
+
+        mins.x, mins.y,
+        maxs.x, mins.y,
+        maxs.x, maxs.y,
+        mins.x, maxs.y,
+
+        mins.x, mins.y,
+        maxs.x, mins.y,
+        maxs.x, maxs.y,
+        mins.x, maxs.y,
+    ]);
 }
 
 function cubeTangents() {
@@ -204,6 +239,8 @@ export async function run(mode: Mode) {
     await renderContext.init();
     let prevState: RenderState | undefined;
     const {  output, camera, quality, debug, grid, cube, scene, terrain,  dynamic, clipping, highlights, outlines, tonemapping, points, toonOutline, pick } = _defaultRenderState(mode);
+    const baseColorBlob = await fetch("uvtemplate.jpg");
+    const baseColorTexture = await createImageBitmap(await baseColorBlob.blob());
     let renderStateGL: RenderState = {
         background: {
             // color: [1., 0., 0.4, 1.],
@@ -280,12 +317,12 @@ export async function run(mode: Mode) {
                                     componentType: "FLOAT",
                                     componentCount: 3,
                                 },
-                                tangent: {
-                                    kind: "FLOAT_VEC4",
-                                    buffer: cubeTangents(),
-                                    componentType: "FLOAT",
-                                    componentCount: 4
-                                },
+                                // tangent: {
+                                //     kind: "FLOAT_VEC4",
+                                //     buffer: cubeTangents(),
+                                //     componentType: "FLOAT",
+                                //     componentCount: 4
+                                // },
                                 color0: {
                                     kind: "FLOAT_VEC4",
                                     buffer: cubeColors(),
@@ -311,10 +348,23 @@ export async function run(mode: Mode) {
                         material: {
                             kind: "ggx",
                             baseColorFactor: [1,1,1,1],
-                            metallicFactor: 0,
+                            metallicFactor: 0.,
                             roughnessFactor: 0.5,
                             emissiveFactor: [0,0,0],
-                            baseColorTexture: undefined,
+                            // baseColorTexture: {
+                            //     texture: {
+                            //         image: {
+                            //             params: {
+                            //                 kind: "TEXTURE_2D",
+                            //                 internalFormat: "RGBA8",
+                            //                 type: "UNSIGNED_BYTE",
+                            //                 width: baseColorTexture.width,
+                            //                 height: baseColorTexture.height,
+                            //                 image: baseColorTexture
+                            //             },
+                            //         }
+                            //     }
+                            // },
                             metallicRoughnessTexture: undefined,
                             normalTexture: undefined,
                             occlusionTexture: undefined,
