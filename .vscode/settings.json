@@ -1,0 +1,6 @@
+{
+    "cmake.configureOnOpen": false,
+    "wgsl-analyzer.customImports": {
+        "novorender::common": "file:///home/arturo/Code/novorender/webgpu-test-app/@novorender/core3d/common.wgsl"
+    }
+}
