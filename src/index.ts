@@ -386,6 +386,182 @@ export async function run(mode: Mode) {
                         position: [2., 0., 0.],
                     }
                 ],
+            },
+            {
+                mesh: {
+                    primitives: [{
+                        geometry: {
+                            primitiveType: "TRIANGLES",
+                            attributes: {
+                                position: {
+                                    kind: "FLOAT_VEC3",
+                                    buffer: cubeVertices(),
+                                    componentType: "FLOAT",
+                                    componentCount: 3,
+                                },
+                                normal: {
+                                    kind: "FLOAT_VEC3",
+                                    buffer: cubeNormals(),
+                                    componentType: "FLOAT",
+                                    componentCount: 3,
+                                },
+                                // tangent: {
+                                //     kind: "FLOAT_VEC4",
+                                //     buffer: cubeTangents(),
+                                //     componentType: "FLOAT",
+                                //     componentCount: 4
+                                // },
+                                color0: {
+                                    kind: "FLOAT_VEC4",
+                                    buffer: cubeWhite(),
+                                    componentType: "FLOAT",
+                                    componentCount: 4
+                                },
+                                texCoord0: {
+                                    kind: "FLOAT_VEC2",
+                                    buffer: cubeTexcoords(),
+                                    componentType: "FLOAT",
+                                    componentCount: 2
+                                },
+                                // texCoord1: {
+                                //     kind: "FLOAT_VEC2",
+                                //     buffer: cubeTexcoords(),
+                                //     componentType: "FLOAT",
+                                //     componentCount: 2
+                                // },
+                            },
+                            indices: cubeIndices(),
+                            // indices: cubeVertices().length
+                        },
+                        material: {
+                            kind: "ggx",
+                            baseColorFactor: [1,1,1,1],
+                            metallicFactor: 0.,
+                            roughnessFactor: 0.5,
+                            emissiveFactor: [0,0,0],
+                            baseColorTexture: {
+                                texture: {
+                                    image: {
+                                        params: {
+                                            kind: "TEXTURE_2D",
+                                            internalFormat: "RGBA8",
+                                            type: "UNSIGNED_BYTE",
+                                            width: baseColorTexture.width,
+                                            height: baseColorTexture.height,
+                                            image: baseColorTexture
+                                        },
+                                    }
+                                }
+                            },
+                            metallicRoughnessTexture: undefined,
+                            normalTexture: undefined,
+                            occlusionTexture: undefined,
+                            emissiveTexture: undefined,
+                            doubleSided: false,
+                            alphaMode: undefined,
+                            alphaCutoff: 0.5,
+                        }
+                    }]
+                },
+                instances: [
+                    {
+                        position: [-2., 0., 2.],
+                    },
+                    {
+                        position: [0., 0., 2.],
+                    },
+                    {
+                        position: [2., 0., 2.],
+                    }
+                ],
+            },
+            {
+                mesh: {
+                    primitives: [{
+                        geometry: {
+                            primitiveType: "TRIANGLES",
+                            attributes: {
+                                position: {
+                                    kind: "FLOAT_VEC3",
+                                    buffer: cubeVertices(),
+                                    componentType: "FLOAT",
+                                    componentCount: 3,
+                                },
+                                normal: {
+                                    kind: "FLOAT_VEC3",
+                                    buffer: cubeNormals(),
+                                    componentType: "FLOAT",
+                                    componentCount: 3,
+                                },
+                                // tangent: {
+                                //     kind: "FLOAT_VEC4",
+                                //     buffer: cubeTangents(),
+                                //     componentType: "FLOAT",
+                                //     componentCount: 4
+                                // },
+                                color0: {
+                                    kind: "FLOAT_VEC4",
+                                    buffer: cubeWhite(),
+                                    componentType: "FLOAT",
+                                    componentCount: 4
+                                },
+                                texCoord0: {
+                                    kind: "FLOAT_VEC2",
+                                    buffer: cubeTexcoords(),
+                                    componentType: "FLOAT",
+                                    componentCount: 2
+                                },
+                                // texCoord1: {
+                                //     kind: "FLOAT_VEC2",
+                                //     buffer: cubeTexcoords(),
+                                //     componentType: "FLOAT",
+                                //     componentCount: 2
+                                // },
+                            },
+                            indices: cubeIndices(),
+                            // indices: cubeVertices().length
+                        },
+                        material: {
+                            kind: "ggx",
+                            baseColorFactor: [1,1,1,1],
+                            metallicFactor: 0.,
+                            roughnessFactor: 0.5,
+                            emissiveFactor: [0,0,0],
+                            baseColorTexture: {
+                                texture: {
+                                    image: {
+                                        params: {
+                                            kind: "TEXTURE_2D",
+                                            internalFormat: "RGBA8",
+                                            type: "UNSIGNED_BYTE",
+                                            width: baseColorTexture.width,
+                                            height: baseColorTexture.height,
+                                            image: baseColorTexture
+                                        },
+                                    }
+                                }
+                            },
+                            metallicRoughnessTexture: undefined,
+                            normalTexture: undefined,
+                            occlusionTexture: undefined,
+                            emissiveTexture: undefined,
+                            doubleSided: false,
+                            alphaMode: undefined,
+                            alphaCutoff: 0.5,
+                        }
+                    }]
+                },
+                instances: [
+                    {
+                        position: [-2., 0., -2.],
+                    },
+                    {
+                        position: [0., 0., -2.],
+                    },
+                    {
+                        position: [2., 0., -2.],
+                    }
+                ],
             }]
         },
         quality,
